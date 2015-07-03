@@ -1,11 +1,11 @@
-class Avacadoh::AvacadohController < ApplicationController
+class HomeController < ApplicationController
   #before_filter :clear_flash
-  def avacadoh
+  def 
 
   end
 
   def create_player_sheet
-    player_sheet =  AvacadohPlayerSheet.new(params[:player_sheet])
+    player_sheet =  PlayerSheet.new(params[:player_sheet])
     if player_sheet.save
       render :json => player_sheet, status: :created
     else
@@ -14,7 +14,7 @@ class Avacadoh::AvacadohController < ApplicationController
   end
 
   def show_player_sheet
-    player_sheet =  AvacadohPlayerSheet.find_by_id(params[:id])
+    player_sheet =  PlayerSheet.find_by_id(params[:id])
     if player_sheet
       render :json => player_sheet, status: :ok
     else
@@ -23,7 +23,7 @@ class Avacadoh::AvacadohController < ApplicationController
   end
 
   def create_player
-    player = AvacadohUser.new(params[:player])
+    player = User.new(params[:player])
     if player.save
       render json: player, status: :created
     else
@@ -33,7 +33,7 @@ class Avacadoh::AvacadohController < ApplicationController
   end
 
   def show_player
-    player = AvacadohUser.find_by_id(params[:id])
+    player = User.find_by_id(params[:id])
     if player
       render json: player, status: :ok
     else

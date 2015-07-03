@@ -3,4 +3,4 @@
 
 require File.expand_path('../config/application', __FILE__)
 
-AvacadohRails::Application.load_tasks
+Avacadoh::Application.load_tasks

@@ -9,4 +9,4 @@
 
 # Make sure your secret_key_base is kept private
 # if you're sharing your code publicly.
-AvacadohRails::Application.config.secret_key_base = 'f90151a78444e10e17a96cc3703fc13ffa5c2abb95fb2efa9eaa26eda18f57389f2ee2d9e75857b8bca159191a8095dea2ea559dd85c86197533984426a8cfe3'
+Avacadoh::Application.config.secret_key_base = 'f90151a78444e10e17a96cc3703fc13ffa5c2abb95fb2efa9eaa26eda18f57389f2ee2d9e75857b8bca159191a8095dea2ea559dd85c86197533984426a8cfe3'
