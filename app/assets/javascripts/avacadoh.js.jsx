@@ -2,7 +2,7 @@
  * @jsx React.DOM
  */
 
-var AvacadohUser = Backbone.Model.extend({urlRoot: '/avacadoh/players'});
+var AvacadohUser = Backbone.Model.extend({urlRoot: '/players'});
 var UserForm = React.createClass({
     handleSubmit: function(e) {
         e.preventDefault();
@@ -39,7 +39,7 @@ var UserForm = React.createClass({
 $(document).ready( function() {
 
     React.render(
-        <UserForm url="/avacadoh/users"  />,
+        <UserForm url="/users"  />,
         document.getElementById('avacadoh_div')
     );
 });

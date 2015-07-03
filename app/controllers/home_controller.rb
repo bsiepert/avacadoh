@@ -1,6 +1,6 @@
 class HomeController < ApplicationController
   #before_filter :clear_flash
-  def 
+  def index
 
   end
 
