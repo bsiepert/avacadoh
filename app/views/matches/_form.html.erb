@@ -1,0 +1,50 @@
+<%= form_for(@match) do |f| %>
+  <% if @match.errors.any? %>
+    <div id="error_explanation">
+      <h2><%= pluralize(@match.errors.count, "error") %> prohibited this match from being saved:</h2>
+
+      <ul>
+      <% @match.errors.full_messages.each do |msg| %>
+        <li><%= msg %></li>
+      <% end %>
+      </ul>
+    </div>
+  <% end %>
+    <h2><%= @match.p1.name %></h2>
+    <ul>
+      <li>
+      <%= f.label :p1_list_played, "List Played" %>
+      <%= f.select :p1_list_played, options_for_select(['1', '2']) %>
+      </li>
+      <li>
+      <%= f.label :p1_control_points, "CPs" %>
+      <%= f.text_field :p1_control_points %>
+      </li>
+      <li>
+      <%= f.label :p1_army_points, "Army Points" %>
+      <%= f.text_field :p1_army_points %>
+      </li>
+    </ul>
+    <h2><%= @match.p2.name %></h2>
+    <ul>
+      <li>
+      <%= f.label :p2_list_played, "List Played" %>
+      <%= f.select :p2_list_played, options_for_select(['1', '2']) %>
+      </li>
+      <li>
+      <%= f.label :p2_control_points, "CPs" %>
+      <%= f.text_field :p2_control_points %>
+      </li>
+      <li>
+      <%= f.label :p2_army_points, "Army Points" %>
+      <%= f.text_field :p2_army_points %>
+      </li>
+    </ul>
+    <hr>
+    <%= f.label :winner_id, "Winner" %>
+    <%= f.select  :winner_id, options_for_select([[' -- Select One --', nil],[@match.p1.name, @match.p1.id],[@match.p2.name, @match.p2.id]]) %>
+
+  <div class="actions">
+    <%= f.submit %>
+  </div>
+<% end %>

@@ -1,0 +1,56 @@
+<h1>Listing matches</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Round</th>
+      <th>Player 1</th>
+      <th>Player 2</th>
+      <th></th>
+      <th></th>
+      <th></th>
+    </tr>
+  </thead>
+
+  <tbody>
+  <%
+     match_groups = @matches.group_by {|m| m.round}
+     match_groups.each do |round, match_group|
+        ended_matches = match_group.group_by {|mm| mm.valid?}%>
+      <tr><td>PENDING</td></tr>
+      <% if pending_matches = ended_matches[false] %>
+      <% pending_matches.each do |pending_match| %>
+      <tr>
+        <td><%= round %></td>
+        <td><%= pending_match.p1.name %></td>
+        <td><%= pending_match.p2.name rescue "BYE"%></td>
+        <td><%= link_to 'Show', pending_match %></td>
+        <td><%= link_to 'Edit', edit_match_path(pending_match) %></td>
+        <td><%= link_to 'Destroy', pending_match, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+     <% end %>
+      <% end %>
+
+     <tr><td>COMPLETE</td></tr>
+      <% if complete_matches = ended_matches[true] %>
+      <% complete_matches.each do |complete_match| %>
+      <tr>
+        <td><%= round %></td>
+        <td><%= complete_match.p1.name %></td>
+        <td><%= complete_match.p2.name rescue "BYE" %></td>
+        <td><%= link_to 'Show', complete_match %></td>
+        <td><%= link_to 'Edit', edit_match_path(complete_match) %></td>
+        <td><%= link_to 'Destroy', complete_match, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+     <% end %>
+  <% end %>
+    <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= link_to 'New Match', new_match_path %>
+<%= form_tag(generate_matches_path, method: "post") do %>
+   <%= submit_tag("Generate Matches") %>
+<% end %>

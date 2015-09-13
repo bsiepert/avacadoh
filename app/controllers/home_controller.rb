@@ -4,26 +4,8 @@ class HomeController < ApplicationController
 
   end
 
-  def create_player_sheet
-    player_sheet =  PlayerSheet.new(params[:player_sheet])
-    if player_sheet.save
-      render :json => player_sheet, status: :created
-    else
-      render :json => player_sheet.errors, status: :unprocessable_entity
-    end
-  end
-
-  def show_player_sheet
-    player_sheet =  PlayerSheet.find_by_id(params[:id])
-    if player_sheet
-      render :json => player_sheet, status: :ok
-    else
-      render :json => player_sheet, status: :not_found
-    end
-  end
-
   def create_player
-    player = User.new(params[:player])
+    player = Player.new(params[:home])
     if player.save
       render json: player, status: :created
     else
@@ -32,8 +14,13 @@ class HomeController < ApplicationController
     end
   end
 
+  def player_index
+    players = Player.all
+    render json: players, status: :ok
+  end
+
   def show_player
-    player = User.find_by_id(params[:id])
+    player = Player.find_by_id(params[:id])
     if player
       render json: player, status: :ok
     else
