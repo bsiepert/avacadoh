@@ -10,6 +10,7 @@ class Match < ActiveRecord::Base
     where('round < ? OR round = ?', round, round)
   end
   
+
   def self.generate_matches
 
     player_ids = Player.active.shuffle
@@ -44,6 +45,52 @@ class Match < ActiveRecord::Base
       match = Match.new(p1: p1, p2: p2)
       match.save(valivate: false)
     end
+
+    Match.all
+
+  end
+
+  def self.initialize_player_memo
+    # for each match in a round
+    @@player_memo = {}
+    matches = Match.all.reject {|m| m.winner.blank? || m.round.blank?}
+    return if matches.blank?
+    rounds = matches.group_by {|match| match.round}
+    round_numbers = matches.keys.sort
+    rounds['1'].each do |r1_match|
+      @@player_memo[r1_match.p1_id] = {}
+      @@player_memo[r1_match.p1_id]['opponents'] = []
+      @@player_memo[r1_match.p1_id]['paired_down'] = false
+      @@player_memo[r1_match.p1_id]['points'] = 0
+      @@player_memo[r1_match.p2_id] = {}
+      @@player_memo[r1_match.p2_id]['opponents'] = []
+      @@player_memo[r1_match.p2_id]['paired_down'] = false
+      @@player_memo[r1_match.p2_id]['points'] = 0
+    end
+    round_numbers.each do |round_number|
+      round_matches = rounds[round_number]
+      round_matches.each do |round_match|
+        p1_id = round_match.p1_id
+        p2_id = round_match.p2_id
+        @@player_memo[p1_id]['opponents'] << p2_id
+        @@player_memo[p2_id]['opponents'] << p1_id
+
+        @@player_memo[p1_id]['paired_down'] = true if @@player_memo[p1_id]['points'] <  @@player_memo[p2_id]['points']
+        @@player_memo[p2_id]['paired_down'] = true if @@player_memo[p2_id]['points'] <  @@player_memo[p1_id]['points']
+
+        @player_memo[round_match.winner_id]['points'] += 1
+      end
+    end
+  end
+
+  def self.have_played?(p1_id, p2_id)
+    @@player_memo ||=  initialize_player_memo
+    @@player_memo[p1_id]['opponents'].include?(p2_id)
+  end
+
+  def self.paired_down?(player_id)
+    @@player_memo ||=  initialize_player_memo
+    @@player_memo[player_id]['paired_down']
   end
 
   def self.pair_groups(group_pairs_master, pair_down=nil)
@@ -70,7 +117,7 @@ class Match < ActiveRecord::Base
     if current_group.length.odd?
       # remove permutations where the pair_down isn't elegible
       group_permutations =group_permutations.reject { |pr| pr.last == pair_down } if pair_down
-      group_permutations = group_permutations.reject { |pr| Player.paired_down(pr.last) }
+      group_permutations = group_permutations.reject { |pr| Match.paired_down?(pr.last) }
     end
 
     group_permutations.each do |group_permutation_master|
@@ -78,12 +125,13 @@ class Match < ActiveRecord::Base
       match_pairs = []
 
       until match_pairs.length < 2
-        pair = match_pair.pop(2)
+        pair = match_pairs.pop(2)
         match_pairs << [pair[0], pair[1]]
       end
+
       new_pair_down =  match_pairs.pop if match_pairs.length == 1
 
-      next if match_pairs.any? {|p1, p2| p1.has_played?(p2)}
+      next if match_pairs.any? {|p1, p2| Match.have_played?(p1_id, p2_id)}
 
       remaining_pairs = Match.pair_groups(remaining_groups, new_pair_down)
 
