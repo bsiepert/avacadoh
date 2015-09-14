@@ -45,7 +45,9 @@ class Match < ActiveRecord::Base
     match_pairs = self.pair_groups(point_groups)
 
     puts match_pairs.inspect
-    new_round = Match.pluck(:round).sort.last +1
+    last_round = Match.pluck(:round).sort.last
+    new_round = last_round + 1
+
     match_pairs.each do |p1_id, p2_id|
       if p2_id == -1
         Match.create(p1_id: p1_id,
