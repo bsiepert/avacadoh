@@ -39,15 +39,71 @@ class Match < ActiveRecord::Base
   def self.generate_round
     point_groups = Player.active.group_by {|pl| pl.points}.to_a.sort{|a,b| b[0]<=>a[0]}
 
-    flat_list = point_groups.collect {|points, players| players.shuffle}.flatten
+    point_groups = point_groups.collect {|points, players|  players.collect {|player| player.id}}
+
     match_pairs = self.pair_groups(point_groups)
-    group_pairs.each do |p1, p2|
-      match = Match.new(p1: p1, p2: p2)
-      match.save(valivate: false)
+    match_pairs.each do |p1_id, p2_id|
+      match.each do |p1, p2|
+        match = Match.new(p1_id: p1_id, p2_id: p2_id)
+        match.save(valivate: false)
+      end
     end
 
     Match.all
 
+  end
+
+  def self.pair_groups(group_pairs_master, pair_down=nil)
+    paired_groups = nil
+    group_pairs = group_pairs_master.dup # do we really need to dup?
+
+    current_group = group_pairs.shift
+    remaining_groups = group_pairs
+
+    # end condition! this must always return something
+    if current_group.nil? # because [].shift == nil
+      # we've been passed and empty group
+      if pair_down.nil?
+        return []
+      else
+        return [[pair_down, -1]]
+      end
+    end
+    current_group << pair_down if pair_down
+    group_permutations = current_group.permutation
+
+    # we this group will need to pair down..
+    # doing this first (and not with the "played?" culling means potentially looping through permutations we will never need)
+    if current_group.length.odd?
+      # remove permutations where the pair_down isn't elegible
+      group_permutations =group_permutations.reject { |pr| pr.last == pair_down } if pair_down
+      group_permutations = group_permutations.reject { |pr| Match.paired_down?(pr.last) }
+    end
+
+    group_permutations.each do |group_permutation_master|
+      group_list = group_permutation_master.dup
+      match_pairs = []
+
+      until match_pairs.length < 2
+        pair = match_pairs.pop(2)
+        match_pairs << [pair[0], pair[1]]
+      end
+
+      new_pair_down =  match_pairs.pop if match_pairs.length == 1
+
+      next if match_pairs.any? {|p1, p2| Match.have_played?(p1_id, p2_id)}
+
+      remaining_pairs = Match.pair_groups(remaining_groups, new_pair_down)
+
+      if remaining_pairs.nil?
+        next
+      else
+        paired_groups = match_pairs + remaining_pairs
+      end
+
+    end
+
+    return paired_groups
   end
 
   def self.initialize_player_memo
@@ -91,59 +147,6 @@ class Match < ActiveRecord::Base
   def self.paired_down?(player_id)
     @@player_memo ||=  initialize_player_memo
     @@player_memo[player_id]['paired_down']
-  end
-
-  def self.pair_groups(group_pairs_master, pair_down=nil)
-    paired_groups = nil
-    group_pairs = group_pairs_master.dup # do we really need to dup?
-
-    current_group = group_pairs.shift
-    remaining_groups = group_pairs
-
-    # end condition! this must always return something
-    if current_group.nil? # because [].shift == nil
-      # we've been passed and empty group
-      if pair_down.nil?
-        return []
-      else
-        return [[pair_down, nil]]
-      end
-    end
-    current_group << pair_down if pair_down
-    group_permutations = current_group.permutation
-
-    # we this group will need to pair down..
-    # doing this first (and not with the "played?" culling means potentially looping through permutations we will never need)
-    if current_group.length.odd?
-      # remove permutations where the pair_down isn't elegible
-      group_permutations =group_permutations.reject { |pr| pr.last == pair_down } if pair_down
-      group_permutations = group_permutations.reject { |pr| Match.paired_down?(pr.last) }
-    end
-
-    group_permutations.each do |group_permutation_master|
-      group_list = group_permutation_master.dup
-      match_pairs = []
-
-      until match_pairs.length < 2
-        pair = match_pairs.pop(2)
-        match_pairs << [pair[0], pair[1]]
-      end
-
-      new_pair_down =  match_pairs.pop if match_pairs.length == 1
-
-      next if match_pairs.any? {|p1, p2| Match.have_played?(p1_id, p2_id)}
-
-      remaining_pairs = Match.pair_groups(remaining_groups, new_pair_down)
-
-      if remaining_pairs.nil?
-        next
-      else
-        paired_groups = match_pairs + remaining_pairs
-      end
-
-    end
-
-    return paired_groups
   end
 
 end

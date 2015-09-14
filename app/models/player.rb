@@ -12,5 +12,5 @@ class Player < ActiveRecord::Base
   def matches
     Match.where('p1_id = ? OR p2_id = ?', id, id)
   end
-  
+
 end
