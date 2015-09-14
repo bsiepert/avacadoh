@@ -37,19 +37,31 @@ class Match < ActiveRecord::Base
   end
 
   def self.generate_round
+    @@player_memo = nil
     point_groups = Player.active.group_by {|pl| pl.points}.to_a.sort{|a,b| b[0]<=>a[0]}
 
     point_groups = point_groups.collect {|points, players|  players.collect {|player| player.id}}
-
+    puts point_groups.inspect
     match_pairs = self.pair_groups(point_groups)
+
+    puts match_pairs.inspect
+    new_round = Match.pluck(:round).sort.last +1
     match_pairs.each do |p1_id, p2_id|
-      match.each do |p1, p2|
-        match = Match.new(p1_id: p1_id, p2_id: p2_id)
-        match.save(valivate: false)
+      if p2_id == -1
+        Match.create(p1_id: p1_id,
+                    p2_id: -1, p1_control_points: 3,
+                    p2_control_points: 0,
+                    p1_army_points: 25,
+                    p2_army_points: 0,
+                    p1_list_played: 1,
+                    p2_list_played: 1,
+                     round: new_round,
+                    winner_id: p1_id)
+      else
+        match = Match.new(p1_id: p1_id, p2_id: p2_id, round: new_round)
+        match.save(validate: false)
       end
     end
-
-    Match.all
 
   end
 
@@ -70,7 +82,7 @@ class Match < ActiveRecord::Base
       end
     end
     current_group << pair_down if pair_down
-    group_permutations = current_group.permutation
+    group_permutations = current_group.permutation.to_a.shuffle
 
     # we this group will need to pair down..
     # doing this first (and not with the "played?" culling means potentially looping through permutations we will never need)
@@ -84,21 +96,25 @@ class Match < ActiveRecord::Base
       group_list = group_permutation_master.dup
       match_pairs = []
 
-      until match_pairs.length < 2
-        pair = match_pairs.pop(2)
+      until group_list.length < 2
+        pair = group_list.pop(2)
         match_pairs << [pair[0], pair[1]]
       end
 
-      new_pair_down =  match_pairs.pop if match_pairs.length == 1
+      new_pair_down =  group_list.pop if group_list.length == 1
 
-      next if match_pairs.any? {|p1, p2| Match.have_played?(p1_id, p2_id)}
+      if match_pairs.any? { |p1_id, p2_id| Match.have_played?(p1_id, p2_id) }
+        puts "skippin perm for played"
+        next
+      end
 
       remaining_pairs = Match.pair_groups(remaining_groups, new_pair_down)
-
+      puts "remaining pairs: #{remaining_pairs.inspect}"
       if remaining_pairs.nil?
         next
       else
         paired_groups = match_pairs + remaining_pairs
+        break
       end
 
     end
@@ -108,35 +124,38 @@ class Match < ActiveRecord::Base
 
   def self.initialize_player_memo
     # for each match in a round
-    @@player_memo = {}
+    player_memo = {}
     matches = Match.all.reject {|m| m.winner.blank? || m.round.blank?}
     return if matches.blank?
     rounds = matches.group_by {|match| match.round}
-    round_numbers = matches.keys.sort
-    rounds['1'].each do |r1_match|
-      @@player_memo[r1_match.p1_id] = {}
-      @@player_memo[r1_match.p1_id]['opponents'] = []
-      @@player_memo[r1_match.p1_id]['paired_down'] = false
-      @@player_memo[r1_match.p1_id]['points'] = 0
-      @@player_memo[r1_match.p2_id] = {}
-      @@player_memo[r1_match.p2_id]['opponents'] = []
-      @@player_memo[r1_match.p2_id]['paired_down'] = false
-      @@player_memo[r1_match.p2_id]['points'] = 0
+    round_numbers = rounds.keys.sort
+    rounds[1].each do |r1_match|
+      player_memo[r1_match.p1_id] = {}
+      player_memo[r1_match.p1_id]['opponents'] = []
+      player_memo[r1_match.p1_id]['paired_down'] = false
+      player_memo[r1_match.p1_id]['points'] = 0
+      player_memo[r1_match.p2_id] = {}
+      player_memo[r1_match.p2_id]['opponents'] = []
+      player_memo[r1_match.p2_id]['paired_down'] = false
+      player_memo[r1_match.p2_id]['points'] = 0
     end
     round_numbers.each do |round_number|
       round_matches = rounds[round_number]
       round_matches.each do |round_match|
         p1_id = round_match.p1_id
         p2_id = round_match.p2_id
-        @@player_memo[p1_id]['opponents'] << p2_id
-        @@player_memo[p2_id]['opponents'] << p1_id
+        player_memo[p1_id]['opponents'] << p2_id
+        player_memo[p2_id]['opponents'] << p1_id
 
-        @@player_memo[p1_id]['paired_down'] = true if @@player_memo[p1_id]['points'] <  @@player_memo[p2_id]['points']
-        @@player_memo[p2_id]['paired_down'] = true if @@player_memo[p2_id]['points'] <  @@player_memo[p1_id]['points']
+        player_memo[p1_id]['paired_down'] = true if player_memo[p1_id]['points'] <  player_memo[p2_id]['points']
+        player_memo[p2_id]['paired_down'] = true if player_memo[p2_id]['points'] <  player_memo[p1_id]['points']
 
-        @player_memo[round_match.winner_id]['points'] += 1
+        player_memo[round_match.winner_id]['points'] += 1
       end
     end
+    puts "player_memo:"
+    puts player_memo
+    player_memo
   end
 
   def self.have_played?(p1_id, p2_id)
