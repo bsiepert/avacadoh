@@ -1,0 +1,66 @@
+<p id="notice"><%= notice %></p>
+
+<h1>Registered Players</h1>
+<ul>
+  <% @event.players.each do |player| %>
+    <li><%= player.name %></li>
+  <% end %>
+</ul>
+<p><%=link_to "Register Players", register_players_url %></p>
+
+<h1>Matches</h1>
+
+<table>
+  <thead>
+  <tr>
+    <th>Round</th>
+    <th>Player 1</th>
+    <th>Player 2</th>
+    <th></th>
+    <th></th>
+    <th></th>
+  </tr>
+  </thead>
+
+  <tbody>
+  <%
+     match_groups = @matches.group_by {|m| m.round}
+     match_groups.each do |round, match_group|
+       ended_matches = match_group.group_by {|mm| mm.valid?}%>
+      <tr><td>PENDING</td></tr>
+      <% if pending_matches = ended_matches[false] %>
+          <% pending_matches.each do |pending_match| %>
+              <tr>
+                <td><%= round %></td>
+                <td><%= pending_match.p1.name %></td>
+                <td><%= pending_match.p2.name rescue "BYE"%></td>
+                <td><%= link_to 'Show', [@event, pending_match] %></td>
+                <td><%= link_to 'Edit',  [:edit, @event, pending_match] %></td>
+              </tr>
+          <% end %>
+      <% end %>
+
+      <tr><td>COMPLETE</td></tr>
+      <% if complete_matches = ended_matches[true] %>
+          <% complete_matches.each do |complete_match| %>
+              <tr>
+                <td><%= round %></td>
+                <td><%= complete_match.p1.name %></td>
+                <td><%= complete_match.p2.name  %></td>
+                <td><%= link_to 'Show',  [@event, complete_match] %> </td>
+                <td></td>
+              </tr>
+          <% end %>
+      <% end %>
+  <% end %>
+  </tbody>
+</table>
+
+<br>
+
+<%= form_tag(create_event_round_path(event_id: @event.id), method: "post") do %>
+    <%= submit_tag("Generate Next Round") %>
+<% end %>
+
+<%= link_to 'Edit', edit_event_path(@event) %> |
+<%= link_to 'Back', events_path %>

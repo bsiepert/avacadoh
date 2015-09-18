@@ -1,10 +1,11 @@
 class MatchesController < ApplicationController
   before_action :set_match, only: [:show, :edit, :update, :destroy]
+  before_action :set_event, only: [:index, :edit, :update, :destroy]
 
   # GET /matches
   # GET /matches.json
   def index
-    @matches = Match.all
+    @matches = @event.matches
   end
 
   # GET /matches/1
@@ -42,7 +43,7 @@ class MatchesController < ApplicationController
   def update
     respond_to do |format|
       if @match.update(match_params)
-        format.html { redirect_to matches_path, notice: 'Match was successfully updated.' }
+        format.html { redirect_to @event, notice: 'Match was successfully updated.' }
         format.json { head :no_content }
       else
         format.html { render action: 'edit' }
@@ -61,16 +62,13 @@ class MatchesController < ApplicationController
     end
   end
 
-  def generate_matches
-    Match.generate_matches
-    respond_to do |format|
-      format.html {redirect_to matches_path}
-    end
-  end
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_match
       @match = Match.find(params[:id])
+    end
+    def set_event
+      @event = Event.find(params[:event_id])
     end
 
     # Never trust parameters from the scary internet, only allow the white list through.

@@ -39,7 +39,7 @@
         <td><%= complete_match.p1.name %></td>
         <td><%= complete_match.p2.name rescue "BYE" %></td>
         <td><%= link_to 'Show', complete_match %></td>
-        <td><%= link_to 'Edit', edit_match_path(complete_match) %></td>
+        <td><%= link_to 'Edit', edit_event_match_path(complete_match) %></td>
         <td><%= link_to 'Destroy', complete_match, method: :delete, data: { confirm: 'Are you sure?' } %></td>
       </tr>
      <% end %>
@@ -50,7 +50,6 @@
 
 <br>
 
-<%= link_to 'New Match', new_match_path %>
 <%= form_tag(generate_matches_path, method: "post") do %>
    <%= submit_tag("Generate Matches") %>
 <% end %>

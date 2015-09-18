@@ -11,10 +11,21 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20150701060644) do
+ActiveRecord::Schema.define(version: 20150916052027) do
+
+  create_table "events", force: true do |t|
+    t.integer  "pg_id"
+    t.string   "name"
+    t.string   "location"
+    t.string   "description"
+    t.datetime "date"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "matches", force: true do |t|
     t.integer  "round"
+    t.integer  "event_id"
     t.integer  "p1_id"
     t.integer  "p2_id"
     t.integer  "p1_list_played"
@@ -29,12 +40,20 @@ ActiveRecord::Schema.define(version: 20150701060644) do
   end
 
   create_table "players", force: true do |t|
-    t.string   "first_name",    limit: 80
+    t.string   "first_name"
     t.string   "last_name"
-    t.string   "email_address", limit: 80
-    t.string   "faction",       limit: 80
+    t.string   "email_address"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
+
+  create_table "registrations", force: true do |t|
+    t.integer "player_id"
+    t.integer "event_id"
+    t.boolean "active"
+  end
+
+  add_index "registrations", ["event_id"], name: "index_registrations_on_event_id", using: :btree
+  add_index "registrations", ["player_id"], name: "index_registrations_on_player_id", using: :btree
 
 end
