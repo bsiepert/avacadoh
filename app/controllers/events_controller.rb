@@ -21,6 +21,7 @@ class EventsController < ApplicationController
   # GET /events/1.json
   def show
     @matches = @event.matches
+    @scoreboard = @event.scoreboard
   end
 
   # GET /events/new

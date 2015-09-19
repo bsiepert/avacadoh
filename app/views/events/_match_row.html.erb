@@ -1,0 +1,17 @@
+<tr>
+  <td><%= round %></td>
+  <% if match.winner_id %>
+    <% if match.winner == match.p1 %>
+        <td><b><%= match.p1.name %></b></td>
+        <td><%= match.p2.name %></td>
+    <% else %>
+        <td><%= match.p1.name %></td>
+        <td><b><%= match.p2.name %></b></td>
+    <% end %>
+  <% else %>
+    <td><%= match.p1.name %></td>
+    <td><%= match.p2.name %></td>
+  <% end %>
+  <td><%= link_to 'Show', [@event, match] %></td>
+  <td><%= link_to 'Edit',  [:edit, @event, match] %></td>
+</tr>

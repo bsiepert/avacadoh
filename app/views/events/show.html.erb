@@ -30,28 +30,38 @@
       <tr><td>PENDING</td></tr>
       <% if pending_matches = ended_matches[false] %>
           <% pending_matches.each do |pending_match| %>
-              <tr>
-                <td><%= round %></td>
-                <td><%= pending_match.p1.name %></td>
-                <td><%= pending_match.p2.name rescue "BYE"%></td>
-                <td><%= link_to 'Show', [@event, pending_match] %></td>
-                <td><%= link_to 'Edit',  [:edit, @event, pending_match] %></td>
-              </tr>
+          <%= render partial: 'match_row', locals: {match: pending_match, round: round} %>
           <% end %>
       <% end %>
 
       <tr><td>COMPLETE</td></tr>
       <% if complete_matches = ended_matches[true] %>
           <% complete_matches.each do |complete_match| %>
-              <tr>
-                <td><%= round %></td>
-                <td><%= complete_match.p1.name %></td>
-                <td><%= complete_match.p2.name  %></td>
-                <td><%= link_to 'Show',  [@event, complete_match] %> </td>
-                <td></td>
-              </tr>
+              <%= render partial: 'match_row', locals: {match: complete_match, round: round} %>
+
           <% end %>
       <% end %>
+  <% end %>
+  </tbody>
+</table>
+
+<table>
+    <thead>
+    <tr>
+    <td>Name</td>
+    <td>Tournament Points</td>
+    <td>SOS</td>
+    <td>CPs</td>
+    </tr>
+    </thead>
+  <tbody>
+  <% @scoreboard.each do |name, points, sos, cps| %>
+    <tr>
+      <td><%= name %></td>
+      <td><%= points %></td>
+      <td><%= sos %></td>
+      <td><%= cps %></td>
+    </tr>
   <% end %>
   </tbody>
 </table>

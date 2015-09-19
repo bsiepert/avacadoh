@@ -46,6 +46,27 @@ class Event < ActiveRecord::Base
 
   end
 
+  def scoreboard
+    player_memo = initialize_player_memo
+
+    player_vitals = players.pluck(:id, :first_name, :last_name)
+    sorted_players = player_vitals.sort_by do |player_id, fname, lname|
+      sort_count = 0
+      sort_count += player_memo[player_id]['points']*10000
+      sort_count += player_memo[player_id]['sos']*1000
+      sort_count += player_memo[player_id]['cps']*100
+      sort_count
+    end
+    scoreboard = sorted_players.reverse.collect do |id, fname, lname|
+      ["#{fname} #{lname}",
+       player_memo[id]['points'],
+       player_memo[id]['sos'],
+       player_memo[id]['cps']
+      ]
+    end
+    scoreboard
+  end
+
   def pair_groups(group_pairs_master, pair_down=nil)
     paired_groups = nil
     group_pairs = group_pairs_master.dup # do we really need to dup?
@@ -59,6 +80,7 @@ class Event < ActiveRecord::Base
       if pair_down.nil?
         return []
       else
+        return nil if had_bye?(pair_down)
         return [[pair_down, -1]]
       end
     end
@@ -113,6 +135,9 @@ class Event < ActiveRecord::Base
       player_memo[player.id]['opponents'] = []
       player_memo[player.id]['paired_down'] = false
       player_memo[player.id]['points'] = 0
+      player_memo[player.id]['bye'] = false
+      player_memo[player.id]['cps'] = 0
+      player_memo[player.id]['sos'] = 0
     end
 
     completed_matches = matches.all.reject {|m| m.winner.blank? || m.round.blank?}
@@ -129,10 +154,22 @@ class Event < ActiveRecord::Base
         player_memo[p1_id]['opponents'] << p2_id
         player_memo[p2_id]['opponents'] << p1_id
 
+        player_memo[p1_id]['cps'] += round_match.p1_control_points
+        player_memo[p2_id]['cps'] += round_match.p2_control_points
+
         player_memo[p1_id]['paired_down'] = true if player_memo[p1_id]['points'] <  player_memo[p2_id]['points']
         player_memo[p2_id]['paired_down'] = true if player_memo[p2_id]['points'] <  player_memo[p1_id]['points']
 
         player_memo[round_match.winner_id]['points'] += 1
+
+        # this only works because the "bye" player is always p2
+        player_memo[p1_id]['bye'] = true if (p2_id == -1)
+      end
+    end
+
+    player_memo.each do |player_id, memo|
+      memo['opponents'].each do |opponent_id|
+        memo['sos'] += player_memo[opponent_id]['points']
       end
     end
     puts "player_memo:"
@@ -146,6 +183,10 @@ class Event < ActiveRecord::Base
 
   def paired_down?(player_id)
     @player_memo[player_id]['paired_down']
+  end
+
+  def had_bye?(player_id)
+    @player_memo[player_id]['bye']
   end
 
 
